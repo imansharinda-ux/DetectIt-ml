@@ -1,8 +1,8 @@
-# PhishLens
+# DetectIt
 
 **Intelligent Web Threat Detection Using Machine Learning**
 
-PhishLens detects phishing URLs using the PhiUSIIL Phishing URL Dataset and compares 8 machine learning algorithms.
+DetectIt detects phishing URLs using the PhiUSIIL Phishing URL Dataset and compares 8 machine learning algorithms.
 
 ## Dataset
 - **PhiUSIIL Phishing URL Dataset** (UCI Machine Learning Repository; Prasad & Chandra, 2024)
