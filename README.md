@@ -16,7 +16,7 @@ DetectIt detects phishing URLs using the PhiUSIIL Phishing URL Dataset and compa
 
 ## Project Structure
 ```
-phishlens-ml/
+DetectIt-ml/
 ├── data/          # dataset (not pushed to GitHub)
 ├── notebooks/     # Jupyter notebooks
 ├── results/       # graphs and result tables
@@ -26,8 +26,8 @@ phishlens-ml/
 
 ## Setup
 ```bash
-git clone https://github.com/imansharinda-ux/phishlens-ml.git
-cd phishlens-ml
+git clone https://github.com/imansharinda-ux/DetectIt-ml.git
+cd DetectIt-ml
 py -3.12 -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
