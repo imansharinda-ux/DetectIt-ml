@@ -36,8 +36,8 @@ pip install -r requirements.txt
 ## Team
 | Name | Reg. No |
 |---|---|
-| Walakanda W.K.C.D. | EG/2023/5939 |
 | Sharinda W.G.I. | EG/2023/5889 |
+| Walakanda W.K.C.D. | EG/2023/5939 |
 | Nelundeniya N.Y.M. | EG/2023/5748 |
 | Koswattage K.S.T. | EG/2023/5687 |
 
