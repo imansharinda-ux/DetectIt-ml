@@ -19,14 +19,15 @@ DetectIt detects phishing URLs using machine learning. We compare 8 algorithms o
 ## Project Structure
 ```
 DetectIt-ml/
-├── data/                      # datasets (not pushed to GitHub)
-│   └── processed/             # cleaned train/test files created by 02_preprocessing
+├── data/                           # datasets (not pushed to GitHub)
+│   └── processed/                  # cleaned files created by the notebooks
 ├── notebooks/
-│   ├── 01_eda.ipynb           # exploratory data analysis
-│   └── 02_preprocessing.ipynb # cleaning, feature engineering and train/test split
-├── results/                   # graphs and result tables
+│   ├── 01_eda.ipynb                # exploratory data analysis
+│   ├── 02_preprocessing.ipynb      # cleaning, feature engineering and train/test split
+│   └── 03_external_dataset.ipynb   # preparing the second dataset for external testing
+├── results/                        # graphs and result tables
 ├── src/
-│   └── features.py            # feature engineering functions
+│   └── features.py                 # feature engineering functions
 ├── requirements.txt
 └── README.md
 ```
@@ -42,8 +43,10 @@ pip install -r requirements.txt
 
 ## How to Run
 1. Download the [PhiUSIIL dataset](https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset) and place `PhiUSIIL_Phishing_URL_Dataset.csv` in the `data/` folder.
-2. Run `notebooks/01_eda.ipynb` to explore the data.
-3. Run `notebooks/02_preprocessing.ipynb` to create the training and test files in `data/processed/`.
+2. Download the [Web Page Phishing Detection Dataset](https://www.kaggle.com/datasets/shashwatwork/web-page-phishing-detection-dataset) and place `dataset_phishing.csv` in the `data/` folder.
+3. Run `notebooks/01_eda.ipynb` to explore the data.
+4. Run `notebooks/02_preprocessing.ipynb` to create the training and test files in `data/processed/`.
+5. Run `notebooks/03_external_dataset.ipynb` to create the external test set in `data/processed/`.
 
 ## Team
 | Name | Reg. No |
