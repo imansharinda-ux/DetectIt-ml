@@ -2,11 +2,13 @@
 
 **Intelligent Web Threat Detection Using Machine Learning**
 
-DetectIt detects phishing URLs using the PhiUSIIL Phishing URL Dataset and compares 8 machine learning algorithms.
+DetectIt detects phishing URLs using machine learning. We compare 8 algorithms on the PhiUSIIL Phishing URL Dataset, and test how well the models work on a second, independent dataset.
 
-## Dataset
-- **PhiUSIIL Phishing URL Dataset** (UCI Machine Learning Repository; Prasad & Chandra, 2024)
-- 235,795 URLs, 54 features, binary label (phishing / legitimate)
+## Datasets
+| Dataset | Use | Size |
+|---|---|---|
+| [PhiUSIIL Phishing URL Dataset](https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset) (Prasad & Chandra, 2024) | Training and internal testing | 235,795 URLs, 54 features |
+| [Web Page Phishing Detection Dataset](https://www.kaggle.com/datasets/shashwatwork/web-page-phishing-detection-dataset) (Hannousse & Yahiouche, 2021) | External testing | 11,430 URLs, 87 features |
 
 ## Algorithms
 | Type | Algorithms |
@@ -20,6 +22,7 @@ DetectIt-ml/
 ├── data/          # dataset (not pushed to GitHub)
 ├── notebooks/     # Jupyter notebooks
 ├── results/       # graphs and result tables
+├── src/           # reusable Python code (feature engineering)
 ├── requirements.txt
 └── README.md
 ```
