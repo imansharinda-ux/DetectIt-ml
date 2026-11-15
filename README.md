@@ -24,10 +24,13 @@ DetectIt-ml/
 ├── notebooks/
 │   ├── 01_eda.ipynb                # exploratory data analysis
 │   ├── 02_preprocessing.ipynb      # cleaning, feature engineering and train/test split
-│   └── 03_external_dataset.ipynb   # preparing the second dataset for external testing
-├── results/                        # graphs and result tables
+│   ├── 03_external_dataset.ipynb   # preparing the second dataset for external testing
+│   └── model_template.ipynb        # starting point for every model notebook
+├── results/                        # graphs, confusion matrices and metric tables
 ├── src/
-│   └── features.py                 # feature engineering functions
+│   ├── features.py                 # feature engineering functions
+│   ├── data.py                     # loading the processed data
+│   └── evaluation.py               # shared metrics, plots and result saving
 ├── requirements.txt
 └── README.md
 ```
