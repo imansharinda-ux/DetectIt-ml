@@ -1,9 +1,11 @@
+import inspect
 import re
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     accuracy_score,
@@ -13,7 +15,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -45,6 +47,50 @@ def cross_validate_model(model, X, y, folds=5):
     scores = cross_validate(model, X, y, cv=make_cv(folds), scoring=list(METRICS), n_jobs=-1)
     table = pd.DataFrame({name: scores[f"test_{key}"] for key, name in METRICS.items()})
     return table.agg(["mean", "std"]).T.rename(columns={"mean": "Mean", "std": "Std"})
+
+
+def make_sample_weights(source):
+    counts = source.value_counts()
+    return source.map(counts.max() / counts).astype(float).to_numpy()
+
+
+def supports_sample_weight(model):
+    estimator = model.steps[-1][1] if isinstance(model, Pipeline) else model
+    return "sample_weight" in inspect.signature(estimator.fit).parameters
+
+
+def fit_with_weights(model, X, y, sample_weight):
+    if not supports_sample_weight(model):
+        return model.fit(X, y)
+    if isinstance(model, Pipeline):
+        return model.fit(X, y, **{f"{model.steps[-1][0]}__sample_weight": sample_weight})
+    return model.fit(X, y, sample_weight=sample_weight)
+
+
+def cross_validate_by_source(model, X, y, source, folds=5):
+    X, y, source = X.reset_index(drop=True), y.reset_index(drop=True), source.reset_index(drop=True)
+    strata = y.astype(str) + "_" + source.astype(str)
+    rows = []
+
+    for fold, (train_idx, val_idx) in enumerate(make_cv(folds).split(X, strata), start=1):
+        fold_model = fit_with_weights(
+            clone(model),
+            X.iloc[train_idx],
+            y.iloc[train_idx],
+            make_sample_weights(source.iloc[train_idx]),
+        )
+        for name in source.unique():
+            val_idx_source = val_idx[source.iloc[val_idx].to_numpy() == name]
+            scores = evaluate_model(fold_model, X.iloc[val_idx_source], y.iloc[val_idx_source])
+            rows.append({"Fold": fold, "Source": name, **scores})
+
+    fold_scores = pd.DataFrame(rows)
+    table = pd.DataFrame(index=list(METRICS.values()))
+    for name in source.unique():
+        scores = fold_scores[fold_scores["Source"] == name][list(METRICS.values())]
+        table[f"{name} Mean"] = scores.mean()
+        table[f"{name} Std"] = scores.std()
+    return table
 
 
 def get_scores(model, X):
