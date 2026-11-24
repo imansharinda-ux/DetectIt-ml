@@ -13,6 +13,10 @@ SUSPICIOUS_WORDS = (
 IP_PATTERN = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
 
 
+def normalize_url(url):
+    return str(url).strip().lower().rstrip("/")
+
+
 def shannon_entropy(text):
     if not text:
         return 0.0
