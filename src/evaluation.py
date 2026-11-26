@@ -109,6 +109,34 @@ def tune_by_source(model, param_grid, X, y, source, folds=3):
     return table.reset_index(drop=True), best_params
 
 
+def tune_cutoff_by_source(model, X, y, source, folds=5, cutoffs=np.arange(0.05, 0.96, 0.05)):
+    X, y, source = X.reset_index(drop=True), y.reset_index(drop=True), source.reset_index(drop=True)
+    strata = y.astype(str) + "_" + source.astype(str)
+    oof_scores = np.zeros(len(y))
+
+    for train_idx, val_idx in make_cv(folds).split(X, strata):
+        fold_model = fit_with_weights(
+            clone(model),
+            X.iloc[train_idx],
+            y.iloc[train_idx],
+            make_sample_weights(source.iloc[train_idx]),
+        )
+        oof_scores[val_idx] = fold_model.predict_proba(X.iloc[val_idx])[:, 1]
+
+    rows = []
+    for cutoff in cutoffs:
+        row = {"Cut-off": round(float(cutoff), 2)}
+        for name in source.unique():
+            mask = (source == name).to_numpy()
+            row[f"{name} F1"] = f1_score(y[mask], oof_scores[mask] >= cutoff, zero_division=0)
+        rows.append(row)
+
+    table = pd.DataFrame(rows)
+    table["Mean F1"] = table.drop(columns="Cut-off").mean(axis=1)
+    best_cutoff = table.loc[table["Mean F1"].idxmax(), "Cut-off"]
+    return table, best_cutoff
+
+
 def get_scores(model, X):
     if hasattr(model, "predict_proba"):
         return model.predict_proba(X)[:, 1]
