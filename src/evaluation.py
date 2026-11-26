@@ -14,7 +14,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.model_selection import ParameterGrid, StratifiedKFold, cross_validate
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
@@ -91,6 +91,22 @@ def cross_validate_by_source(model, X, y, source, folds=5):
         table[f"{name} Mean"] = scores.mean()
         table[f"{name} Std"] = scores.std()
     return table
+
+
+def tune_by_source(model, param_grid, X, y, source, folds=3):
+    candidates = list(ParameterGrid(param_grid))
+    rows = []
+    for params in candidates:
+        scores = cross_validate_by_source(clone(model).set_params(**params), X, y, source, folds)
+        rows.append({name: scores.loc["F1", f"{name} Mean"] for name in source.unique()})
+
+    table = pd.DataFrame(rows)
+    table.columns = [f"{name} F1" for name in table.columns]
+    table["Mean F1"] = table.mean(axis=1)
+    settings = pd.DataFrame(candidates).astype(object).where(pd.DataFrame(candidates).notna(), "None")
+    table = pd.concat([settings, table], axis=1).sort_values("Mean F1", ascending=False)
+    best_params = candidates[table.index[0]]
+    return table.reset_index(drop=True), best_params
 
 
 def get_scores(model, X):
