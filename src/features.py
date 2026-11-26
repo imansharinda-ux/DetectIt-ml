@@ -28,9 +28,19 @@ BRANDS = (
 
 FILE_EXTENSION_PATTERN = re.compile(r"\.(php|html?|asp|aspx|jsp|exe|zip|cgi)$")
 
+SCHEME_PATTERN = re.compile(r"^[a-z][a-z0-9+.-]*://", re.IGNORECASE)
+
+WWW_PATTERN = re.compile(r"^www\.", re.IGNORECASE)
+
+SCHEME_FEATURES = ["HasHTTPSScheme", "HasWWW"]
+
 
 def normalize_url(url):
     return str(url).strip().lower().rstrip("/")
+
+
+def clean_url(url):
+    return WWW_PATTERN.sub("", SCHEME_PATTERN.sub("", str(url).strip()))
 
 
 def shannon_entropy(text):
@@ -129,6 +139,10 @@ def extract_extra_url_features(url):
 def build_all_url_features(urls):
     extra = pd.DataFrame([extract_extra_url_features(url) for url in urls], index=urls.index)
     return pd.concat([build_url_features(urls), extra], axis=1)
+
+
+def build_clean_url_features(urls):
+    return build_all_url_features(urls.map(clean_url)).drop(columns=SCHEME_FEATURES)
 
 
 def build_page_features(df):

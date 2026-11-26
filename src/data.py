@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.features import build_all_url_features
+from src.features import build_all_url_features, build_clean_url_features
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 PROCESSED_DIR = PROJECT_DIR / "data" / "processed"
@@ -37,7 +37,8 @@ def load_url_part(url_file, label_file):
     return urls, y
 
 
-def load_url_experiment():
+def load_url_experiment(clean_urls=False):
+    build_features = build_clean_url_features if clean_urls else build_all_url_features
     phi_train_urls, phi_train_y = load_url_part("train_urls.csv", "train.csv")
     phi_test_urls, phi_test_y = load_url_part("test_urls.csv", "test.csv")
     kaggle_train_urls, kaggle_train_y = load_url_part("external_train_urls.csv", "external_train.csv")
@@ -46,11 +47,11 @@ def load_url_experiment():
     train_urls = pd.concat([phi_train_urls, kaggle_train_urls], ignore_index=True)
     y_train = pd.concat([phi_train_y, kaggle_train_y], ignore_index=True)
     source = pd.Series(["PhiUSIIL"] * len(phi_train_urls) + ["Kaggle"] * len(kaggle_train_urls), name="Source")
-    X_train = build_all_url_features(train_urls)
+    X_train = build_features(train_urls)
 
     test_sets = {
-        "PhiUSIIL test set": (build_all_url_features(phi_test_urls), phi_test_y),
-        "Kaggle test set": (build_all_url_features(kaggle_test_urls), kaggle_test_y),
+        "PhiUSIIL test set": (build_features(phi_test_urls), phi_test_y),
+        "Kaggle test set": (build_features(kaggle_test_urls), kaggle_test_y),
     }
     return X_train, y_train, source, test_sets
 
