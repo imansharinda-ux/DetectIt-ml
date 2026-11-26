@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.features import build_url_features
+from src.features import build_all_url_features
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 PROCESSED_DIR = PROJECT_DIR / "data" / "processed"
@@ -31,21 +31,35 @@ def load_train_test():
     return train.drop(columns=TARGET), test.drop(columns=TARGET), train[TARGET], test[TARGET]
 
 
+def load_url_part(url_file, label_file):
+    urls = pd.read_csv(PROCESSED_DIR / url_file).iloc[:, 0]
+    y = pd.read_csv(PROCESSED_DIR / label_file, usecols=[TARGET])[TARGET]
+    return urls, y
+
+
 def load_url_experiment():
-    train_urls = pd.read_csv(PROCESSED_DIR / "train_urls.csv")["URL"]
-    test_urls = pd.read_csv(PROCESSED_DIR / "test_urls.csv")["URL"]
-    y_train = pd.read_csv(PROCESSED_DIR / "train.csv", usecols=[TARGET])[TARGET]
-    y_test = pd.read_csv(PROCESSED_DIR / "test.csv", usecols=[TARGET])[TARGET]
-    external = pd.read_csv(PROCESSED_DIR / "external_test.csv")
+    phi_train_urls, phi_train_y = load_url_part("train_urls.csv", "train.csv")
+    phi_test_urls, phi_test_y = load_url_part("test_urls.csv", "test.csv")
+    kaggle_train_urls, kaggle_train_y = load_url_part("external_train_urls.csv", "external_train.csv")
+    kaggle_test_urls, kaggle_test_y = load_url_part("external_test_urls.csv", "external_test.csv")
 
-    X_train = build_url_features(train_urls)
-    X_test = build_url_features(test_urls)
-    X_external = external[X_train.columns]
-    return X_train, X_test, X_external, y_train, y_test, external[TARGET]
+    train_urls = pd.concat([phi_train_urls, kaggle_train_urls], ignore_index=True)
+    y_train = pd.concat([phi_train_y, kaggle_train_y], ignore_index=True)
+    source = pd.Series(["PhiUSIIL"] * len(phi_train_urls) + ["Kaggle"] * len(kaggle_train_urls), name="Source")
+    X_train = build_all_url_features(train_urls)
+
+    test_sets = {
+        "PhiUSIIL test set": (build_all_url_features(phi_test_urls), phi_test_y),
+        "Kaggle test set": (build_all_url_features(kaggle_test_urls), kaggle_test_y),
+    }
+    return X_train, y_train, source, test_sets
 
 
-def sample_rows(X, y, size, random_state=42):
+def sample_rows(X, y, size, random_state=42, groups=None):
     if size is None or size >= len(X):
-        return X, y
-    X_sample, _, y_sample, _ = train_test_split(X, y, train_size=size, stratify=y, random_state=random_state)
-    return X_sample, y_sample
+        return (X, y) if groups is None else (X, y, groups)
+    stratify = y if groups is None else y.astype(str) + "_" + groups.astype(str)
+    index, _ = train_test_split(X.index, train_size=size, stratify=stratify, random_state=random_state)
+    if groups is None:
+        return X.loc[index], y.loc[index]
+    return X.loc[index], y.loc[index], groups.loc[index]
