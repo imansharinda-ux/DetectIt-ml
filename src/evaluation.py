@@ -14,7 +14,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import ParameterGrid, StratifiedKFold, cross_validate
+from sklearn.model_selection import ParameterGrid, StratifiedKFold, cross_validate, learning_curve
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
@@ -191,3 +191,60 @@ def save_results(model_name, results):
     table.insert(0, "Model", model_name)
     table.to_csv(save_dir / f"{to_file_name(model_name)}.csv", index=False)
     return table
+
+
+def learning_curve_table(model, X, y, folds=5, sizes=np.linspace(0.1, 1.0, 5)):
+    train_sizes, train_scores, val_scores = learning_curve(
+        model,
+        X,
+        y,
+        train_sizes=sizes,
+        cv=make_cv(folds),
+        scoring="f1",
+        n_jobs=-1,
+    )
+    return pd.DataFrame({
+        "Training size": train_sizes,
+        "Training F1": train_scores.mean(axis=1),
+        "Training Std": train_scores.std(axis=1),
+        "Validation F1": val_scores.mean(axis=1),
+        "Validation Std": val_scores.std(axis=1),
+    })
+
+
+def describe_fit(table, gap_limit=0.01, score_limit=0.95):
+    last = table.iloc[-1]
+    gap = last["Training F1"] - last["Validation F1"]
+    if last["Validation F1"] < score_limit and gap <= gap_limit:
+        return "Underfitting", gap
+    if gap > gap_limit:
+        return "Overfitting", gap
+    return "Good fit", gap
+
+
+def plot_learning_curve(table, title, ax=None):
+    save_dir = RESULTS_DIR / "learning_curves"
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    own_figure = ax is None
+    if own_figure:
+        fig, ax = plt.subplots(figsize=(6, 4))
+    for name, color in [("Training", "tab:blue"), ("Validation", "tab:orange")]:
+        mean = table[f"{name} F1"]
+        std = table[f"{name} Std"]
+        ax.plot(table["Training size"], mean, "o-", color=color, label=f"{name} F1")
+        ax.fill_between(table["Training size"], mean - std, mean + std, color=color, alpha=0.15)
+    lower = min((table["Training F1"] - table["Training Std"]).min(), (table["Validation F1"] - table["Validation Std"]).min())
+    ax.set_ylim(max(0, lower - 0.02), 1.002)
+    ax.ticklabel_format(axis="y", useOffset=False)
+    fit, gap = describe_fit(table)
+    ax.set_title(f"{title}\n{fit} (gap {gap:.4f})")
+    ax.set_xlabel("Training size")
+    ax.set_ylabel("F1 score")
+    ax.grid(alpha=0.3)
+    ax.legend(loc="lower right")
+    if own_figure:
+        fig.tight_layout()
+        fig.savefig(save_dir / f"{to_file_name(title)}.png", dpi=300)
+        plt.show()
+
